@@ -1,0 +1,43 @@
+{# Report page: score + list of issues + download button. #}
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+    <div>
+        <h1 class="mb-1">{{ track.title }}</h1>
+        <p class="text-muted">{{ track.artist }}</p>
+    </div>
+    <div class="score-card score-{{ band }}">
+        <div class="score-number">{{ track.risk_score }}</div>
+        <div class="score-label">/ 100</div>
+    </div>
+</div>
+
+<hr>
+
+<h4 class="mb-3">
+    {% if track.issues %}
+        {{ track.issues|length }} issue{{ 's' if track.issues|length != 1 else '' }} found
+    {% else %}
+        No issues found — clean metadata.
+    {% endif %}
+</h4>
+
+{% for issue in track.issues %}
+    <div class="card issue-card issue-{{ issue.severity }} mb-3">
+        <div class="card-body">
+            <span class="badge severity-{{ issue.severity }}">{{ issue.severity|upper }}</span>
+            <h5 class="mt-2">{{ issue.message }}</h5>
+            <p class="mb-0 text-muted"><strong>Fix:</strong> {{ issue.fix }}</p>
+        </div>
+    </div>
+{% endfor %}
+
+<div class="mt-4">
+    <a href="{{ url_for('index') }}" class="btn btn-primary">Analyze another track</a>
+    <a href="{{ url_for('history') }}" class="btn btn-outline-secondary">See history</a>
+    <a href="{{ url_for('report_pdf', track_id=track.id) }}" class="btn btn-outline-dark">
+        Download PDF
+    </a>
+</div>
+{% endblock %}

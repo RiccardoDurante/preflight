@@ -1,0 +1,92 @@
+/* styles.css — PreFlight custom styles on top of Bootstrap. */
+
+/* Neutral, professional palette. */
+body {
+    background-color: #fafafa;
+    color: #1a1f36;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Brand in the navbar. */
+.brand {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: #1a1f36;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.brand-mark {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    line-height: 28px;
+    text-align: center;
+    background-color: #0a2540;
+    color: white;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+.navbar-brand:hover { color: #0a2540; }
+
+.nav-link { color: #4a5568 !important; font-weight: 500; }
+.nav-link:hover { color: #0a2540 !important; }
+
+/* Hero section on the home. */
+.hero { padding: 20px 0 10px; }
+.hero h1 { font-weight: 600; letter-spacing: -0.02em; }
+
+/* Buttons: darker, more B2B. */
+.btn-primary {
+    background-color: #0a2540;
+    border-color: #0a2540;
+}
+.btn-primary:hover {
+    background-color: #123456;
+    border-color: #123456;
+}
+
+/* Score card in the report. */
+.score-card {
+    text-align: center;
+    padding: 1.25rem 1.75rem;
+    border-radius: 10px;
+    color: white;
+    min-width: 140px;
+    box-shadow: 0 2px 6px rgba(10, 37, 64, 0.08);
+}
+.score-number {
+    font-size: 2.75rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+.score-label { font-size: 0.85rem; opacity: 0.9; }
+
+.score-green  { background-color: #087443; }
+.score-amber  { background-color: #b7791f; }
+.score-red    { background-color: #b91c1c; }
+
+/* Issue cards. */
+.issue-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: none;
+}
+.issue-red   { border-left: 4px solid #b91c1c; }
+.issue-amber { border-left: 4px solid #b7791f; }
+
+.severity-red   { background-color: #b91c1c; color: white; }
+.severity-amber { background-color: #b7791f; color: white; }
+
+/* Score badge in the history table. */
+.score-badge {
+    color: white;
+    font-weight: 600;
+    padding: 6px 10px;
+}
+
+/* Footer: quieter. */
+footer { color: #6b7280; }

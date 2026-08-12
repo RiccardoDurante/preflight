@@ -1,0 +1,67 @@
+{# About page: the problem, the idea, and the plan. #}
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-9">
+
+        <h1 class="display-6 mb-4">Royalties go into the black box because metadata is broken. We fix it before the release.</h1>
+
+        <h3 class="mt-5">The problem</h3>
+        <p>
+            Every year, hundreds of millions of dollars in music royalties are
+            never paid to the artists who earned them. This money sits in what
+            the industry calls the "black box" — a suspense account held by
+            streaming platforms and collecting societies.
+        </p>
+        <p>
+            The reason is not fraud. It is bad metadata. When a track is
+            delivered with a missing code, a typo in a writer's name, or a
+            wrong percentage split, the system cannot match the stream to a
+            verified owner. After two or three years, the unclaimed money is
+            given to the biggest rightsholders by market share. It never
+            reaches the real creator.
+        </p>
+        <p>
+            One example: the U.S. Mechanical Licensing Collective reported
+            <strong>$424 million</strong> in unclaimed mechanical royalties
+            in 2021 alone.
+        </p>
+
+        <h3 class="mt-5">The idea</h3>
+        <p>
+            Today, the industry is reactive. Companies try to recover this
+            money after it has already been lost, which takes years and often
+            fails.
+        </p>
+        <p>
+            PreFlight is proactive. It moves the fix to the moment
+            <em>before</em> the release, when correcting a code or a name
+            costs nothing. The tool checks the metadata of a track and
+            gives a clear report: what is wrong, why it causes revenue loss,
+            and how to fix it.
+        </p>
+
+        <h3 class="mt-5">How it could be used</h3>
+        <p>
+            This project is a proof of concept. In the real world, the same
+            engine could be plugged into the ingestion pipeline of a music
+            distributor, so that every track is checked at delivery time. It
+            could also help a collecting society reduce the size of its
+            unallocated pool, or an artist's team run a quick check before
+            sending a release to their distributor.
+        </p>
+
+        <h3 class="mt-5">About this project</h3>
+        <p>
+            PreFlight is my final project for CS50. It is a small MVP built
+            with Python, Flask and SQLite. The goal is to show a simple but
+            real idea from the music tech industry, and to prove that even a
+            basic tool can point to a serious problem.
+        </p>
+
+        <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg mt-4">Try it now</a>
+
+    </div>
+</div>
+{% endblock %}

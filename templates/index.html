@@ -1,0 +1,88 @@
+{# Home page: short intro + input form. #}
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="hero">
+    <h1 class="display-6">Check your track before you release it.</h1>
+    <p class="lead text-muted">
+        PreFlight scans the metadata of your track and flags the errors that
+        cause royalty loss after release. Fix them now, when it's free.
+    </p>
+</div>
+
+<hr class="my-4">
+
+<form action="{{ url_for('analyze') }}" method="post">
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Track title *</label>
+            <input type="text" name="title" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Main artist *</label>
+            <input type="text" name="artist" class="form-control" required>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">ISRC (recording code)</label>
+            <input type="text" name="isrc" class="form-control" placeholder="e.g. ITB251234567">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">ISWC (composition code)</label>
+            <input type="text" name="iswc" class="form-control" placeholder="e.g. T-123456789-0">
+        </div>
+
+        <div class="col-md-12">
+            <label class="form-label">Publisher</label>
+            <input type="text" name="publisher" class="form-control" placeholder="e.g. Rossi Publishing (or 'self-published')">
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <h4>Writers</h4>
+    <p class="text-muted small">Splits must total 100%.</p>
+
+    <div id="writers-container">
+        <div class="row g-2 writer-row mb-2">
+            <div class="col-md-5">
+                <input type="text" name="writer_name" class="form-control" placeholder="Writer name" required>
+            </div>
+            <div class="col-md-2">
+                <input type="number" name="writer_split" class="form-control" placeholder="%" step="0.01" min="0" max="100" required>
+            </div>
+            <div class="col-md-4">
+                <input type="text" name="writer_ipi" class="form-control" placeholder="IPI (optional)">
+            </div>
+            <div class="col-md-1">
+                <button type="button" class="btn btn-outline-danger btn-sm remove-writer">×</button>
+            </div>
+        </div>
+    </div>
+
+    <button type="button" id="add-writer" class="btn btn-outline-secondary btn-sm mt-2">+ Add writer</button>
+
+    <hr class="my-4">
+
+    <button type="submit" class="btn btn-primary btn-lg">Analyze</button>
+</form>
+
+<script>
+    // Add or remove writer rows.
+    const container = document.getElementById("writers-container");
+
+    document.getElementById("add-writer").addEventListener("click", () => {
+        const row = container.querySelector(".writer-row").cloneNode(true);
+        row.querySelectorAll("input").forEach(i => i.value = "");
+        container.appendChild(row);
+    });
+
+    container.addEventListener("click", (e) => {
+        if (e.target.classList.contains("remove-writer")) {
+            const rows = container.querySelectorAll(".writer-row");
+            if (rows.length > 1) e.target.closest(".writer-row").remove();
+        }
+    });
+</script>
+{% endblock %}
