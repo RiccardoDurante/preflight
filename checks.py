@@ -113,6 +113,38 @@ def check_name_consistency(artist, writers):
     return None
 
 
+# How similar two writer names must be (0-100) to flag them as possible
+# duplicates, when they are not already an exact match.
+# Lower than ARTIST_SIMILARITY_THRESHOLD on purpose: an abbreviation like
+# "M. Rossi" shares fewer characters with "Mario Rossi" than two spellings
+# of the same full name would, so a strict threshold would miss it.
+NAME_SIMILARITY_THRESHOLD = 60
+
+
+# Writer names that look like variants of each other (e.g. "Mario Rossi"
+# and "M. Rossi"), but are not spelled identically.
+def check_similar_writer_names(writers):
+    names = [w.get("name", "") for w in writers if w.get("name")]
+
+    for i in range(len(names)):
+        for j in range(i + 1, len(names)):
+            name_a = names[i]
+            name_b = names[j]
+
+            if name_a.strip().lower() == name_b.strip().lower():
+                continue  # exact match, already caught by check_name_consistency
+
+            similarity = fuzz.ratio(name_a, name_b)
+            if similarity >= NAME_SIMILARITY_THRESHOLD:
+                return {
+                    "severity": "amber",
+                    "message": f"Writer names look similar, possible duplicate: "
+                                f"'{name_a}' and '{name_b}'.",
+                    "fix": "Confirm these are two different people, or use one consistent name.",
+                }
+    return None
+
+
 # How similar two artist names must be to count as "the same artist".
 # Below this, we treat them as different people (a real conflict).
 # 70 allows small differences like "Mario Rossi" vs "M. Rossi", but still
@@ -145,8 +177,6 @@ def check_isrc_conflict(isrc, artist):
     if len(recordings) == 0:
         return None
 
-    # If at least one recording found has a similar enough artist name,
-    # we treat it as the same artist, not a conflict.
     same_artist_found = False
     for recording in recordings:
         similarity = fuzz.token_sort_ratio(artist, recording["artist"])
@@ -178,6 +208,7 @@ def run_all_checks(track):
         check_missing_publisher(track.get("publisher")),
         check_missing_ipi(writers),
         check_name_consistency(track.get("artist", ""), writers),
+        check_similar_writer_names(writers),
         check_isrc_conflict(track.get("isrc"), track.get("artist", "")),
     ]
     return [r for r in results if r is not None]
@@ -229,9 +260,6 @@ if __name__ == "__main__":
         print(f"[{i['severity'].upper()}] {i['message']}")
         print(f"    -> {i['fix']}\n")
 
-    # Direct test of the new rule, using a real ISRC that MusicBrainz knows
-    # (Daft Punk - "One More Time"), with a made-up different artist name.
-    # This should trigger a red conflict issue.
     print("--- Direct test of check_isrc_conflict ---")
     conflict = check_isrc_conflict("GBDUW0000053", "Mario Rossi")
     if conflict is None:
@@ -239,3 +267,15 @@ if __name__ == "__main__":
     else:
         print(f"[{conflict['severity'].upper()}] {conflict['message']}")
         print(f"    -> {conflict['fix']}")
+
+    print("\n--- Direct test of check_similar_writer_names ---")
+    similar_writers = [
+        {"name": "Mario Rossi", "split": 60, "ipi": ""},
+        {"name": "M. Rossi", "split": 40, "ipi": ""},
+    ]
+    similar = check_similar_writer_names(similar_writers)
+    if similar is None:
+        print("No similar names detected (unexpected for this test).")
+    else:
+        print(f"[{similar['severity'].upper()}] {similar['message']}")
+        print(f"    -> {similar['fix']}")
