@@ -1,6 +1,11 @@
 """checks.py — Metadata validation rules. Each returns {severity, message, fix} or None."""
 
 import re
+import requests
+from rapidfuzz import fuzz
+
+import models
+import musicbrainz_client
 
 
 # Splits must sum to 100.
@@ -108,6 +113,60 @@ def check_name_consistency(artist, writers):
     return None
 
 
+# How similar two artist names must be to count as "the same artist".
+# Below this, we treat them as different people (a real conflict).
+# 70 allows small differences like "Mario Rossi" vs "M. Rossi", but still
+# catches names that are actually different.
+ARTIST_SIMILARITY_THRESHOLD = 70
+
+
+# ISRC already registered on MusicBrainz for a different artist.
+def check_isrc_conflict(isrc, artist):
+    if not isrc or not isrc.strip():
+        return None
+
+    cleaned_isrc = isrc.replace("-", "").upper().strip()
+
+    cached_result = models.get_cached_mb_result(cleaned_isrc)
+
+    if cached_result is not None:
+        recordings = cached_result
+    else:
+        try:
+            recordings = musicbrainz_client.search_recordings_by_isrc(cleaned_isrc)
+            models.save_mb_result(cleaned_isrc, recordings)
+        except requests.exceptions.RequestException:
+            return {
+                "severity": "info",
+                "message": "Could not check MusicBrainz for ISRC conflicts right now.",
+                "fix": "Check your internet connection and try again later.",
+            }
+
+    if len(recordings) == 0:
+        return None
+
+    # If at least one recording found has a similar enough artist name,
+    # we treat it as the same artist, not a conflict.
+    same_artist_found = False
+    for recording in recordings:
+        similarity = fuzz.token_sort_ratio(artist, recording["artist"])
+        if similarity >= ARTIST_SIMILARITY_THRESHOLD:
+            same_artist_found = True
+            break
+
+    if same_artist_found:
+        return None
+
+    other_title = recordings[0]["title"]
+    other_artist = recordings[0]["artist"]
+    return {
+        "severity": "red",
+        "message": f"This ISRC is already registered for a different work "
+                    f"(found: '{other_title}' by {other_artist}).",
+        "fix": "Verify the ISRC is correct, or request a new one for this recording.",
+    }
+
+
 # Run all rules, drop the Nones.
 def run_all_checks(track):
     writers = track.get("writers", [])
@@ -119,6 +178,7 @@ def run_all_checks(track):
         check_missing_publisher(track.get("publisher")),
         check_missing_ipi(writers),
         check_name_consistency(track.get("artist", ""), writers),
+        check_isrc_conflict(track.get("isrc"), track.get("artist", "")),
     ]
     return [r for r in results if r is not None]
 
@@ -146,6 +206,8 @@ def score_band(score):
 
 # Smoke test: `python checks.py`
 if __name__ == "__main__":
+    models.init_db()
+
     sample = {
         "title": "Notte a Roma",
         "artist": "Mario Rossi",
@@ -166,3 +228,14 @@ if __name__ == "__main__":
     for i in issues:
         print(f"[{i['severity'].upper()}] {i['message']}")
         print(f"    -> {i['fix']}\n")
+
+    # Direct test of the new rule, using a real ISRC that MusicBrainz knows
+    # (Daft Punk - "One More Time"), with a made-up different artist name.
+    # This should trigger a red conflict issue.
+    print("--- Direct test of check_isrc_conflict ---")
+    conflict = check_isrc_conflict("GBDUW0000053", "Mario Rossi")
+    if conflict is None:
+        print("No conflict detected (unexpected for this test).")
+    else:
+        print(f"[{conflict['severity'].upper()}] {conflict['message']}")
+        print(f"    -> {conflict['fix']}")
