@@ -194,6 +194,121 @@ tone.
 
 ---
 
+## D11 — Branching strategy for v2 development
+
+**Context:** `main` is the exact commit already submitted, certified, and
+linked publicly on LinkedIn. Phase 2 introduces new dependencies and a new
+external integration, with no guarantee everything would work on the first
+try.
+
+**Options:**
+- A. Keep committing directly to `main`.
+- B. Tag the current commit as a fixed reference point, then create a
+  separate `v2` branch for all new work, leaving `main` untouched.
+
+**Choice:** B.
+
+**Reason:** the tag (`v1.0-cs50`) gives a permanent, citable reference to
+the exact CS50 submission. The `v2` branch lets me experiment freely
+without risking the version that is already public and graded. GitHub
+shows `main` by default to anyone following the LinkedIn link, so nothing
+changes for existing viewers until I choose to merge.
+
+---
+
+## D12 — Handling MusicBrainz network failures
+
+**Context:** `check_isrc_conflict` depends on an external API call, unlike
+every other rule, which is instant and offline. A network failure (no
+internet, MusicBrainz down) needed a defined behavior.
+
+**Options:**
+- A. Fail silently: treat a network error the same as "no conflict found."
+  The user never notices the check didn't run.
+- B. Surface it as a distinct, low-severity issue ("Could not check
+  MusicBrainz for ISRC conflicts right now"), using a new "info" severity
+  that does not affect the Risk Score.
+
+**Choice:** B.
+
+**Reason:** for a tool whose whole point is catching problems before
+release, silently skipping a check is worse than admitting it couldn't run.
+An "info" issue costs nothing in score but keeps the user honestly informed.
+
+---
+
+## D13 — Cache expiry policy for MusicBrainz lookups
+
+**Context:** the `mb_cache` table stores every ISRC lookup result, to avoid
+re-querying MusicBrainz and to respect its 1 req/sec limit.
+
+**Options:**
+- A. No expiry: once an ISRC is looked up, the result is reused forever.
+- B. Add a time-to-live (e.g., re-check after 30 days).
+
+**Choice:** A, for now.
+
+**Reason:** the data MusicBrainz holds for a given ISRC (title, artist)
+rarely changes after the fact. A TTL adds complexity for a benefit that
+doesn't apply to this use case yet. If real usage shows otherwise, this is
+a small, isolated change to `get_cached_mb_result`.
+
+---
+
+## D14 — Fuzzy matching thresholds and ISWC scope
+
+**Context:** Phase 2 needed two separate similarity checks: (1) is a
+MusicBrainz artist name close enough to the track's artist to count as
+"the same person," and (2) are two writers on the same track close enough
+to be a spelling variant of one person. It also needed a decision on
+whether to search MusicBrainz by ISWC as well as ISRC in this phase.
+
+**Options:**
+- Single shared similarity threshold for both checks, vs. two separate
+  thresholds tuned to each case.
+- Implement both ISRC and ISWC conflict search now, vs. ISRC only.
+
+**Choice:** two separate thresholds (70 for the MusicBrainz artist check,
+60 for the writer-duplicate check), and ISRC only for this phase.
+
+**Reason:** the two checks compare different things. Matching a track's
+artist against MusicBrainz mostly needs to tolerate small spelling
+differences, so 70 works well. Matching two writer names on the same track
+needs to also catch heavy abbreviations like "M. Rossi" vs "Mario Rossi",
+which share fewer characters, so a lower threshold (60) is needed to catch
+them — accepting a slightly higher chance of a false positive between two
+different people with similar names. ISWC search uses a different
+MusicBrainz endpoint (`work`, not `recording`); scoping it out kept this
+phase focused and testable. It is a natural, self-contained addition for a
+later phase.
+
+---
+
+## D15 — Testing an external API without calling it
+
+**Context:** `check_isrc_conflict` calls a real external API and reads from
+the database. Tests that hit the real network would be slow, flaky (depend
+on MusicBrainz being reachable), and could pollute `database.db` with test
+data.
+
+**Options:**
+- A. Let tests call the real MusicBrainz API and the real database.
+- B. Use pytest's built-in `monkeypatch` fixture to temporarily replace
+  `models.get_cached_mb_result`, `models.save_mb_result`, and
+  `musicbrainz_client.search_recordings_by_isrc` with fake functions during
+  each test, restored automatically afterwards.
+
+**Choice:** B.
+
+**Reason:** the new tests run in 0.25 seconds total (27 tests, including
+the 18 from Phase 1) with zero network calls, and their outcome no longer
+depends on MusicBrainz being online. This is standard practice for testing
+any code with an external dependency, and it kept the existing tests'
+plain, explicit style — no new library was needed, `monkeypatch` is
+already part of pytest.
+
+---
+
 ## Meta-principle
 
 Every entry above follows the same structure: **context -> options -> choice

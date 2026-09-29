@@ -25,7 +25,7 @@ non-technical person can actually use.
 
 ---
 
-## Phase 2 — External data integration (v1.1)
+## Phase 2 — External data integration (v1.1) — COMPLETED
 
 **Goal:** move from a self-contained engine to a tool that checks metadata
 against a real-world dataset.
@@ -45,6 +45,10 @@ against a real-world dataset.
 
 **Success metric:** at least 30% of test tracks receive at least one
 additional validation signal from MusicBrainz.
+
+**Status:** shipped on branch `v2` (9 new tests added, 27/27 passing),
+pending merge to `main`. ISWC lookup was scoped out of this phase — see
+DECISION_LOG D14.
 
 ---
 
