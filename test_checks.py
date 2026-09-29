@@ -1,5 +1,9 @@
 """test_checks.py — Automated tests for the validation engine. Run with: pytest -v"""
 
+import requests
+
+import models
+import musicbrainz_client
 from checks import (
     check_splits_sum,
     validate_isrc,
@@ -7,6 +11,8 @@ from checks import (
     check_isrc_iswc_linkage,
     check_missing_publisher,
     check_missing_ipi,
+    check_similar_writer_names,
+    check_isrc_conflict,
     run_all_checks,
     calculate_risk_score,
     score_band,
@@ -101,9 +107,136 @@ def test_missing_ipi_is_amber():
     assert issue["severity"] == "amber"
 
 
+# --- Rule 7: similar writer names (fuzzy matching) ---
+
+def test_similar_writer_names_detects_variant():
+    writers = [
+        {"name": "Mario Rossi"},
+        {"name": "M. Rossi"},
+    ]
+    issue = check_similar_writer_names(writers)
+    assert issue is not None
+    assert issue["severity"] == "amber"
+
+
+def test_different_writer_names_passes():
+    writers = [
+        {"name": "Mario Rossi"},
+        {"name": "Anna Bianchi"},
+    ]
+    assert check_similar_writer_names(writers) is None
+
+
+def test_exact_duplicate_is_not_flagged_here():
+    # Same name, different case: this is check_name_consistency's job,
+    # not check_similar_writer_names's job. It should be skipped here.
+    writers = [
+        {"name": "Mario Rossi"},
+        {"name": "mario rossi"},
+    ]
+    assert check_similar_writer_names(writers) is None
+
+
+# --- Rule 8: ISRC conflict via MusicBrainz (mocked, no real network calls) ---
+
+def test_isrc_conflict_different_artist_is_red(monkeypatch):
+    def fake_cache_lookup(isrc):
+        return None  # cache miss
+
+    def fake_save(isrc, recordings):
+        pass  # do nothing, we don't need to really save during a test
+
+    def fake_search(isrc):
+        return [{"title": "One More Time", "artist": "Daft Punk", "mbid": "abc123"}]
+
+    monkeypatch.setattr(models, "get_cached_mb_result", fake_cache_lookup)
+    monkeypatch.setattr(models, "save_mb_result", fake_save)
+    monkeypatch.setattr(musicbrainz_client, "search_recordings_by_isrc", fake_search)
+
+    issue = check_isrc_conflict("GBDUW0000053", "Mario Rossi")
+    assert issue is not None
+    assert issue["severity"] == "red"
+
+
+def test_isrc_conflict_same_artist_passes(monkeypatch):
+    def fake_cache_lookup(isrc):
+        return None
+
+    def fake_save(isrc, recordings):
+        pass
+
+    def fake_search(isrc):
+        return [{"title": "Notte a Roma", "artist": "Mario Rossi", "mbid": "abc123"}]
+
+    monkeypatch.setattr(models, "get_cached_mb_result", fake_cache_lookup)
+    monkeypatch.setattr(models, "save_mb_result", fake_save)
+    monkeypatch.setattr(musicbrainz_client, "search_recordings_by_isrc", fake_search)
+
+    assert check_isrc_conflict("ITB251234567", "Mario Rossi") is None
+
+
+def test_isrc_conflict_no_recordings_found_passes(monkeypatch):
+    def fake_cache_lookup(isrc):
+        return None
+
+    def fake_save(isrc, recordings):
+        pass
+
+    def fake_search(isrc):
+        return []
+
+    monkeypatch.setattr(models, "get_cached_mb_result", fake_cache_lookup)
+    monkeypatch.setattr(models, "save_mb_result", fake_save)
+    monkeypatch.setattr(musicbrainz_client, "search_recordings_by_isrc", fake_search)
+
+    assert check_isrc_conflict("ITB251234567", "Mario Rossi") is None
+
+
+def test_isrc_conflict_uses_cache_and_skips_network(monkeypatch):
+    def fake_cache_lookup(isrc):
+        # Cache hit: a different artist was already found and saved before.
+        return [{"title": "One More Time", "artist": "Daft Punk", "mbid": "abc123"}]
+
+    def fake_search(isrc):
+        # This must never be called when the cache already has an answer.
+        raise AssertionError("Network call made even though cache had a result.")
+
+    monkeypatch.setattr(models, "get_cached_mb_result", fake_cache_lookup)
+    monkeypatch.setattr(musicbrainz_client, "search_recordings_by_isrc", fake_search)
+
+    issue = check_isrc_conflict("GBDUW0000053", "Mario Rossi")
+    assert issue is not None
+    assert issue["severity"] == "red"
+
+
+def test_isrc_conflict_network_error_is_info(monkeypatch):
+    def fake_cache_lookup(isrc):
+        return None
+
+    def fake_search(isrc):
+        raise requests.exceptions.ConnectionError("No internet for this test.")
+
+    monkeypatch.setattr(models, "get_cached_mb_result", fake_cache_lookup)
+    monkeypatch.setattr(musicbrainz_client, "search_recordings_by_isrc", fake_search)
+
+    issue = check_isrc_conflict("ITB251234567", "Mario Rossi")
+    assert issue is not None
+    assert issue["severity"] == "info"
+
+
+def test_isrc_conflict_empty_isrc_passes():
+    # No ISRC at all: nothing to check, and no network call should happen.
+    assert check_isrc_conflict("", "Mario Rossi") is None
+
+
 # --- Score ---
 
-def test_perfect_track_scores_100():
+def test_perfect_track_scores_100(monkeypatch):
+    def fake_cache_lookup(isrc):
+        return []  # pretend MusicBrainz has no conflicting recording
+
+    monkeypatch.setattr(models, "get_cached_mb_result", fake_cache_lookup)
+
     track = {
         "title": "Perfect",
         "artist": "Mario Rossi",
