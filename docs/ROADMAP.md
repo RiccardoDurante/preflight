@@ -38,6 +38,7 @@ against a real-world dataset.
   work — potential conflict."
 - Fuzzy matching on writer names using ``rapidfuzz`` (catches "Mario Rossi"
   vs "M. Rossi").
+- ISWC conflict search (same pattern as ISRC, extended to works/composers).
 
 **Effort estimate:** ~20 hours.
 
@@ -46,9 +47,9 @@ against a real-world dataset.
 **Success metric:** at least 30% of test tracks receive at least one
 additional validation signal from MusicBrainz.
 
-**Status:** shipped on branch `v2` (9 new tests added, 27/27 passing),
-pending merge to `main`. ISWC lookup was scoped out of this phase — see
-DECISION_LOG D14.
+**Status:** shipped on branch `v2` (34/34 tests passing). ISWC lookup was
+initially scoped out (see DECISION_LOG D14) and added afterwards in the
+same phase (see DECISION_LOG D16). Still pending merge to `main`.
 
 ---
 

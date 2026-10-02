@@ -280,7 +280,7 @@ them — accepting a slightly higher chance of a false positive between two
 different people with similar names. ISWC search uses a different
 MusicBrainz endpoint (`work`, not `recording`); scoping it out kept this
 phase focused and testable. It is a natural, self-contained addition for a
-later phase.
+later phase. (Update: implemented in D16.)
 
 ---
 
@@ -306,6 +306,33 @@ depends on MusicBrainz being online. This is standard practice for testing
 any code with an external dependency, and it kept the existing tests'
 plain, explicit style — no new library was needed, `monkeypatch` is
 already part of pytest.
+
+---
+
+## D16 — Adding ISWC conflict search after all
+
+**Context:** D14 deliberately scoped ISWC search out of Phase 2, to keep
+the phase small and testable. After finishing Phase 2 and its cleanup, I
+decided to come back and add it, using the same pattern already proven for
+ISRC (a client function, a cache table, a validation rule, mocked tests).
+
+**Options:**
+- A. Leave it as a future phase, as originally planned.
+- B. Implement it now, re-using the exact same pattern as the ISRC
+  conflict check, now that the pattern is proven and tested.
+
+**Choice:** B.
+
+**Reason:** the ISRC conflict check (client function + cache table +
+validation rule + mocked tests) turned out to be a reusable template. The
+ISWC version needed one real difference, not just a copy-paste: a
+recording has one main artist, but a work (composition) can have several
+writers, so `check_iswc_conflict` compares the *whole* writers list
+against MusicBrainz's composer list, and treats a match on any single pair
+as "the same work" — not a conflict. This mirrors how real-world
+co-written songs work, and reuses `ARTIST_SIMILARITY_THRESHOLD` from D14
+for consistency, since both checks answer the same underlying question:
+"is this close enough to count as the same person?"
 
 ---
 
