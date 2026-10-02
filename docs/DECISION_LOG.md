@@ -336,6 +336,42 @@ for consistency, since both checks answer the same underlying question:
 
 ---
 
+## D17 -- Economic impact model: aggregate risk fraction vs per-issue cost attribution
+
+**Context:** Phase 3 (ROADMAP) originally planned a formula with four
+factors -- estimated streams, a per-stream rate, an "uncollected share," and
+a "territory factor" -- producing a cost estimate for *each individual
+issue* ("this issue may cost you approximately X euro/year"). Building
+that would require real-world data on how much revenue each specific type
+of error actually blocks, which isn't publicly available (the same gap
+already noted in D7 for the Risk Score weights).
+
+**Options considered:**
+- A. Research and assign a distinct euro-cost weight to each of the ten
+  validation rules, matching the original per-issue formula.
+- B. Reuse the existing severity weights from the Risk Score (red = heavier,
+  amber = lighter, from D7) as a single "risk fraction" of total revenue,
+  and apply it against total estimated revenue (streams x per-stream
+  royalty rate, varying by territory) to get one aggregate euro figure per
+  track.
+
+**Choice:** B.
+
+**Reason:** the same data gap that forced a simple, transparent Risk Score
+in D7 applies here -- there is no public source for issue-specific euro
+impact, so inventing per-rule weights would trade one honest approximation
+for a more precise-*looking* but equally unfounded one. Reusing the Risk
+Score's severity weights (red = 15% of revenue at risk, amber = 5%, capped
+at 80% so there's always some chance revenue still comes through) keeps the
+two numbers -- the 0-100 score and the euro estimate -- telling the same
+story instead of two inconsistent ones. Per-stream royalty rates do vary by
+territory (Italy, USA, other), so that part of the original formula is
+implemented as specified. The per-issue breakdown and a dedicated
+methodology document remain a future refinement if real impact data
+becomes available.
+
+---
+
 ## Meta-principle
 
 Every entry above follows the same structure: **context -> options -> choice
@@ -345,3 +381,4 @@ recoverable in one place.
 
 For an early-career project manager, the ability to make and document
 decisions is more important than the ability to write clever code.
+

@@ -217,10 +217,33 @@ without rewriting the original thoughts above:
   see [docs/ROADMAP.md](docs/ROADMAP.md).
 
 
+## Update -- v2 (Phase 3)
+
+The scoring limitation mentioned above -- counting issues by number, not by
+actual financial impact -- now has a first, honest answer. PreFlight
+estimates revenue at risk in euros for each track: expected streams (user
+input) x a per-stream royalty rate that varies by territory (Italy, USA, or
+other), multiplied by the same red/amber severity weights already used for
+the Risk Score (see DECISION_LOG D7 and the new entry D17). The report, the
+PDF export, and the history page all show this estimate.
+
+This is deliberately not the more ambitious per-issue cost formula sketched
+in the original Phase 3 plan (ROADMAP.md) -- that would require real data on
+how much revenue each specific error type blocks, data that isn't publicly
+available. DECISION_LOG D17 explains why I chose the simpler, consistent
+model instead of inventing numbers that would look more precise than they
+actually are.
+
+The `expected_streams` input is validated server-side: a non-numeric or
+negative value is now flagged as its own issue, the same way every other
+field is checked.
+
+
 # More documentation
 
 For a deeper look at the product thinking behind PreFlight:
 - [Product Brief](docs/PROJECT_BRIEF.md) — problem, market, users, competition
 - [Roadmap](docs/ROADMAP.md) — completed work and planned phases
 - [Decision Log](docs/DECISION_LOG.md) — key decisions with context and reasoning
+
 

@@ -74,6 +74,16 @@ average data.
 **Success metric:** estimates fall within a plausible order of magnitude
 compared to industry reports (Notes.fm averages ~$15.5k/artist).
 
+**Status:** shipped on branch `v2`, with a simpler model than originally
+planned (see DECISION_LOG D17). The report now shows, per track: total
+estimated revenue (streams x per-stream rate by territory), the percentage
+of that revenue at risk (derived from the same severity weights used for
+the Risk Score), and the resulting euro amount at risk. This replaces the
+originally planned `uncollected-share x territory-factor` formula and the
+per-issue cost breakdown -- both deferred, see D17. `expected_streams`
+input is also validated (non-numeric or negative values are flagged as an
+issue, consistent with how every other field is checked).
+
 ---
 
 ## Phase 4 — Batch analysis and CSV upload (v1.3)
@@ -141,3 +151,4 @@ pilot.
 4. **Prefer transparent formulas over black-box models.** For a tool that
    claims to fight opacity, opacity in the tool itself would be a
    contradiction.
+
