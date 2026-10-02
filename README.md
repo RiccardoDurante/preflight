@@ -4,6 +4,10 @@
 # City, country: Rome, Italy
 # Date: 25 August 2026
 
+**Live demo:** https://preflight-orns.onrender.com (free tier -- may take
+30-60 seconds to wake up if it has been idle; data resets periodically,
+see "Deployment" below).
+
 # Main Description
 
 I created "PreFlight" for my final CS50 project just because I wanted to 
@@ -291,6 +295,7 @@ For a deeper look at the product thinking behind PreFlight:
 - [Product Brief](docs/PROJECT_BRIEF.md) — problem, market, users, competition
 - [Roadmap](docs/ROADMAP.md) — completed work and planned phases
 - [Decision Log](docs/DECISION_LOG.md) — key decisions with context and reasoning
+
 
 
 
