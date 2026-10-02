@@ -158,6 +158,22 @@ to my limitations.
 
 I used AI also to translate some sentences due to lenguage limitaions.
 
+## Update — v2 (Phase 2, September 2026)
+
+This CS50 submission (tagged `v1.0-cs50` in the repository) was certified
+as-is. All development after that point lives on a separate `v2` branch,
+so this section stays an honest, growing record rather than a rewrite.
+
+For Phase 2 (MusicBrainz integration and fuzzy matching), I kept working
+with Claude the same way: as a tutor, not an autopilot. For each new piece
+(the MusicBrainz client, the SQLite cache, the new validation rule, the
+mocked tests), Claude explained the concept first — rate limiting, caching,
+fuzzy string matching, mocking an external API in tests — and I decided the
+scope and the thresholds before any code was written. I ran and read the
+output of every terminal command myself, and every file was tested before
+moving to the next one. The full reasoning for each decision is in
+[docs/DECISION_LOG.md](docs/DECISION_LOG.md) (entries D11 to D15).
+
 # My Final Thoughts
 
 The final score is a indicative estimate. Count the issues by number, not by actual 
@@ -179,6 +195,27 @@ would use approximate matching.
 
 Thank you.
 
+## Update — v2 (Phase 2, September 2026)
+
+Two of the three limitations above were partially addressed in Phase 2,
+without rewriting the original thoughts above:
+
+- **Name consistency:** `checks.py` now has `check_similar_writer_names`,
+  using the `rapidfuzz` library to catch variants like "Riccardo Durante"
+  vs "R. Durante" — exactly the example I gave above. See
+  [docs/DECISION_LOG.md](docs/DECISION_LOG.md), entry D14.
+- **Connection to industry registries:** PreFlight now queries
+  **MusicBrainz**, a free, public music metadata database, to check if an
+  ISRC is already registered to a different work. This is not SIAE, ASCAP,
+  or MLC — those still require licensed partnerships, as I wrote above —
+  but it is a first real connection to an external, independent data
+  source instead of validating metadata in isolation. See DECISION_LOG D12
+  and D13.
+- The scoring limitation (counting issues by number, not by financial
+  impact) is still open. It is the explicit goal of Phase 3, which adds a
+  transparent, documented formula to estimate euros at risk per issue —
+  see [docs/ROADMAP.md](docs/ROADMAP.md).
+
 
 # More documentation
 
@@ -186,3 +223,4 @@ For a deeper look at the product thinking behind PreFlight:
 - [Product Brief](docs/PROJECT_BRIEF.md) — problem, market, users, competition
 - [Roadmap](docs/ROADMAP.md) — completed work and planned phases
 - [Decision Log](docs/DECISION_LOG.md) — key decisions with context and reasoning
+
