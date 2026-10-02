@@ -13,6 +13,7 @@ from checks import (
     check_missing_ipi,
     check_similar_writer_names,
     check_isrc_conflict,
+    check_iswc_conflict,
     run_all_checks,
     calculate_risk_score,
     score_band,
@@ -229,13 +230,135 @@ def test_isrc_conflict_empty_isrc_passes():
     assert check_isrc_conflict("", "Mario Rossi") is None
 
 
+# --- Rule 9: ISWC conflict via MusicBrainz (mocked, no real network calls) ---
+
+def test_iswc_conflict_different_composer_is_red(monkeypatch):
+    def fake_cache_lookup(iswc):
+        return None
+
+    def fake_save(iswc, works):
+        pass
+
+    def fake_search(iswc):
+        return [{"title": "HELLO!", "composers": ["Tsunku"], "mbid": "abc123"}]
+
+    monkeypatch.setattr(models, "get_cached_mb_work_result", fake_cache_lookup)
+    monkeypatch.setattr(models, "save_mb_work_result", fake_save)
+    monkeypatch.setattr(musicbrainz_client, "search_works_by_iswc", fake_search)
+
+    writers = [{"name": "Mario Rossi", "split": 100, "ipi": ""}]
+    issue = check_iswc_conflict("T1016903209", writers)
+    assert issue is not None
+    assert issue["severity"] == "red"
+
+
+def test_iswc_conflict_same_composer_passes(monkeypatch):
+    def fake_cache_lookup(iswc):
+        return None
+
+    def fake_save(iswc, works):
+        pass
+
+    def fake_search(iswc):
+        return [{"title": "Notte a Roma", "composers": ["Mario Rossi"], "mbid": "abc123"}]
+
+    monkeypatch.setattr(models, "get_cached_mb_work_result", fake_cache_lookup)
+    monkeypatch.setattr(models, "save_mb_work_result", fake_save)
+    monkeypatch.setattr(musicbrainz_client, "search_works_by_iswc", fake_search)
+
+    writers = [{"name": "Mario Rossi", "split": 100, "ipi": ""}]
+    assert check_iswc_conflict("T1234567890", writers) is None
+
+
+def test_iswc_conflict_matches_any_writer_in_list(monkeypatch):
+    # The track has two writers. MusicBrainz's composer matches the second
+    # one, not the first. This should still count as "the same work".
+    def fake_cache_lookup(iswc):
+        return None
+
+    def fake_save(iswc, works):
+        pass
+
+    def fake_search(iswc):
+        return [{"title": "Notte a Roma", "composers": ["Anna Bianchi"], "mbid": "abc123"}]
+
+    monkeypatch.setattr(models, "get_cached_mb_work_result", fake_cache_lookup)
+    monkeypatch.setattr(models, "save_mb_work_result", fake_save)
+    monkeypatch.setattr(musicbrainz_client, "search_works_by_iswc", fake_search)
+
+    writers = [
+        {"name": "Mario Rossi", "split": 60, "ipi": ""},
+        {"name": "Anna Bianchi", "split": 40, "ipi": ""},
+    ]
+    assert check_iswc_conflict("T1234567890", writers) is None
+
+
+def test_iswc_conflict_no_works_found_passes(monkeypatch):
+    def fake_cache_lookup(iswc):
+        return None
+
+    def fake_save(iswc, works):
+        pass
+
+    def fake_search(iswc):
+        return []
+
+    monkeypatch.setattr(models, "get_cached_mb_work_result", fake_cache_lookup)
+    monkeypatch.setattr(models, "save_mb_work_result", fake_save)
+    monkeypatch.setattr(musicbrainz_client, "search_works_by_iswc", fake_search)
+
+    writers = [{"name": "Mario Rossi", "split": 100, "ipi": ""}]
+    assert check_iswc_conflict("T1234567890", writers) is None
+
+
+def test_iswc_conflict_uses_cache_and_skips_network(monkeypatch):
+    def fake_cache_lookup(iswc):
+        return [{"title": "HELLO!", "composers": ["Tsunku"], "mbid": "abc123"}]
+
+    def fake_search(iswc):
+        raise AssertionError("Network call made even though cache had a result.")
+
+    monkeypatch.setattr(models, "get_cached_mb_work_result", fake_cache_lookup)
+    monkeypatch.setattr(musicbrainz_client, "search_works_by_iswc", fake_search)
+
+    writers = [{"name": "Mario Rossi", "split": 100, "ipi": ""}]
+    issue = check_iswc_conflict("T1016903209", writers)
+    assert issue is not None
+    assert issue["severity"] == "red"
+
+
+def test_iswc_conflict_network_error_is_info(monkeypatch):
+    def fake_cache_lookup(iswc):
+        return None
+
+    def fake_search(iswc):
+        raise requests.exceptions.ConnectionError("No internet for this test.")
+
+    monkeypatch.setattr(models, "get_cached_mb_work_result", fake_cache_lookup)
+    monkeypatch.setattr(musicbrainz_client, "search_works_by_iswc", fake_search)
+
+    writers = [{"name": "Mario Rossi", "split": 100, "ipi": ""}]
+    issue = check_iswc_conflict("T1234567890", writers)
+    assert issue is not None
+    assert issue["severity"] == "info"
+
+
+def test_iswc_conflict_empty_iswc_passes():
+    writers = [{"name": "Mario Rossi", "split": 100, "ipi": ""}]
+    assert check_iswc_conflict("", writers) is None
+
+
 # --- Score ---
 
 def test_perfect_track_scores_100(monkeypatch):
     def fake_cache_lookup(isrc):
         return []  # pretend MusicBrainz has no conflicting recording
 
+    def fake_work_cache_lookup(iswc):
+        return []  # pretend MusicBrainz has no conflicting work
+
     monkeypatch.setattr(models, "get_cached_mb_result", fake_cache_lookup)
+    monkeypatch.setattr(models, "get_cached_mb_work_result", fake_work_cache_lookup)
 
     track = {
         "title": "Perfect",
