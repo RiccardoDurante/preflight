@@ -26,6 +26,8 @@ def init_db():
             isrc        TEXT,
             iswc        TEXT,
             publisher   TEXT,
+            expected_streams INTEGER,
+            territory   TEXT,
             writers     TEXT,
             risk_score  INTEGER NOT NULL,
             created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -77,14 +79,16 @@ def save_track(track, score, issues):
     cur = conn.cursor()
 
     cur.execute("""
-        INSERT INTO tracks (title, artist, isrc, iswc, publisher, writers, risk_score)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO tracks (title, artist, isrc, iswc, publisher, expected_streams, territory, writers, risk_score)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         track.get("title", ""),
         track.get("artist", ""),
         track.get("isrc", ""),
         track.get("iswc", ""),
         track.get("publisher", ""),
+        track.get("expected_streams", "0"),
+        track.get("territory", "other"),
         json.dumps(track.get("writers", [])),  # list -> JSON string
         score,
     ))
@@ -241,3 +245,7 @@ if __name__ == "__main__":
     save_mb_work_result("T1016903209", fake_work_result)
 
     print(f"Cache after saving: {get_cached_mb_work_result('T1016903209')}")
+
+
+
+

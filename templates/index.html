@@ -37,6 +37,20 @@
             <label class="form-label">Publisher</label>
             <input type="text" name="publisher" class="form-control" placeholder="e.g. Rossi Publishing (or 'self-published')">
         </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Expected streams (first year)</label>
+            <input type="number" name="expected_streams" class="form-control" value="10000" min="0">
+            <div class="form-text">Used only to estimate royalty risk in euros. Replace with a real estimate if you have one.</div>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Main market</label>
+            <select name="territory" class="form-select">
+                <option value="italy">Italy</option>
+                <option value="usa">USA</option>
+                <option value="other">Other / not specified</option>
+            </select>
+        </div>
     </div>
 
     <hr class="my-4">

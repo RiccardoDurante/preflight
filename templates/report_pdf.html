@@ -55,6 +55,21 @@
     }
     .meta strong { color: #222; }
 
+    .royalty-box {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 8px 10px;
+        margin-bottom: 14px;
+        font-size: 9pt;
+        background-color: #f8f9fa;
+    }
+    .royalty-box .label { color: #555; }
+    .royalty-box .note {
+        font-size: 7.5pt;
+        color: #999;
+        margin-top: 4px;
+    }
+
     h2 {
         font-size: 12pt;
         margin-top: 16px;
@@ -130,6 +145,16 @@
         {% endfor %}
     </div>
 
+    <div class="royalty-box">
+        <span class="label">Estimated revenue (first year):</span>
+        <strong>&euro;{{ "%.2f"|format(revenue_risk.total_revenue) }}</strong> &nbsp;&nbsp;
+        <span class="label">Share at risk:</span>
+        <strong>{{ revenue_risk.risk_fraction }}%</strong> &nbsp;&nbsp;
+        <span class="label">Revenue at risk:</span>
+        <strong>&euro;{{ "%.2f"|format(revenue_risk.revenue_at_risk) }}</strong>
+        <div class="note">Rough estimate based on expected streams and territory. Not a financial calculation.</div>
+    </div>
+
     <h2>
         {% if track.issues %}
             {{ track.issues|length }} issue{{ 's' if track.issues|length != 1 else '' }} found
@@ -151,4 +176,6 @@
     </div>
 </body>
 </html>
+
+
 

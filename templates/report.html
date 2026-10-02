@@ -13,6 +13,24 @@
     </div>
 </div>
 
+<div class="card mt-3 mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Estimated royalty risk</h5>
+        <p class="mb-1">
+            Estimated revenue (first year): <strong>&euro;{{ "%.2f"|format(revenue_risk.total_revenue) }}</strong>
+        </p>
+        <p class="mb-1">
+            Share at risk due to metadata issues: <strong>{{ revenue_risk.risk_fraction }}%</strong>
+        </p>
+        <p class="mb-0">
+            Estimated revenue at risk: <strong>&euro;{{ "%.2f"|format(revenue_risk.revenue_at_risk) }}</strong>
+        </p>
+        <p class="text-muted small mt-2 mb-0">
+            Rough estimate based on expected streams and territory. Not a financial calculation.
+        </p>
+    </div>
+</div>
+
 <hr>
 
 <h4 class="mb-3">

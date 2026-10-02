@@ -5,7 +5,7 @@ from flask import Flask, render_template, request, redirect, url_for, abort, Res
 
 from xhtml2pdf import pisa
 
-from checks import run_all_checks, calculate_risk_score, score_band
+from checks import run_all_checks, calculate_risk_score, score_band, estimate_revenue_at_risk
 from models import init_db, save_track, get_track, get_all_tracks
 
 app = Flask(__name__)
@@ -36,6 +36,8 @@ def analyze():
         "isrc": request.form.get("isrc", "").strip(),
         "iswc": request.form.get("iswc", "").strip(),
         "publisher": request.form.get("publisher", "").strip(),
+        "expected_streams": request.form.get("expected_streams", "0").strip(),
+        "territory": request.form.get("territory", "other").strip(),
     }
 
     # Read the writer fields (they come as parallel lists).
@@ -94,7 +96,8 @@ def report(track_id):
     track["issues"] = red_issues + amber_issues
 
     band = score_band(track["risk_score"])
-    return render_template("report.html", track=track, band=band)
+    revenue_risk = estimate_revenue_at_risk(track, track["issues"])
+    return render_template("report.html", track=track, band=band, revenue_risk=revenue_risk)
 
 
 # PDF download of the report.
@@ -117,7 +120,8 @@ def report_pdf(track_id):
     band = score_band(track["risk_score"])
 
     # Render the PDF template and convert it to PDF.
-    html = render_template("report_pdf.html", track=track, band=band)
+    revenue_risk = estimate_revenue_at_risk(track, track["issues"])
+    html = render_template("report_pdf.html", track=track, band=band, revenue_risk=revenue_risk)
     pdf_buffer = BytesIO()
     pisa.CreatePDF(src=html, dest=pdf_buffer)
     pdf_buffer.seek(0)
@@ -151,3 +155,8 @@ def history():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+
+
+

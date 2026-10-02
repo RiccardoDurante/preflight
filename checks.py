@@ -288,6 +288,53 @@ def calculate_risk_score(issues):
     return max(score, 0)
 
 
+# Royalty rate per stream, in euros (rough industry averages).
+ROYALTY_RATE_PER_STREAM = {
+    "italy": 0.0035,
+    "usa": 0.0040,
+    "other": 0.0025,
+}
+
+# Each red issue puts this fraction of revenue at risk (e.g. wrong splits
+# or missing ISWC linkage can block or misdirect royalty payments).
+# Each amber issue puts a smaller fraction at risk. Capped so the total
+# never exceeds 80% (there's always some chance revenue still comes through).
+RISK_FRACTION_RED = 0.15
+RISK_FRACTION_AMBER = 0.05
+RISK_FRACTION_CAP = 0.80
+
+
+# Rough euro estimate of revenue at risk, based on expected streams,
+# territory, and the issues found. This is an illustrative estimate,
+# not a financial calculation -- it's meant to make the risk tangible,
+# not to be precise.
+def estimate_revenue_at_risk(track, issues):
+    try:
+        streams = float(track.get("expected_streams", 0))
+    except (ValueError, TypeError):
+        streams = 0
+
+    territory = track.get("territory", "other")
+    rate = ROYALTY_RATE_PER_STREAM.get(territory, ROYALTY_RATE_PER_STREAM["other"])
+
+    risk_fraction = 0
+    for issue in issues:
+        if issue["severity"] == "red":
+            risk_fraction += RISK_FRACTION_RED
+        elif issue["severity"] == "amber":
+            risk_fraction += RISK_FRACTION_AMBER
+    risk_fraction = min(risk_fraction, RISK_FRACTION_CAP)
+
+    total_revenue = streams * rate
+    revenue_at_risk = total_revenue * risk_fraction
+
+    return {
+        "total_revenue": round(total_revenue, 2),
+        "risk_fraction": round(risk_fraction * 100, 1),  # as a percentage
+        "revenue_at_risk": round(revenue_at_risk, 2),
+    }
+
+
 # Score -> color band.
 def score_band(score):
     if score >= 80:
@@ -351,3 +398,4 @@ if __name__ == "__main__":
     else:
         print(f"[{iswc_conflict['severity'].upper()}] {iswc_conflict['message']}")
         print(f"    -> {iswc_conflict['fix']}")
+
