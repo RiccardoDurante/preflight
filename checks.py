@@ -145,10 +145,8 @@ def check_similar_writer_names(writers):
     return None
 
 
-# How similar two artist names must be to count as "the same artist".
-# Below this, we treat them as different people (a real conflict).
-# 70 allows small differences like "Mario Rossi" vs "M. Rossi", but still
-# catches names that are actually different.
+# How similar two names must be to count as "the same person". Used both
+# for the ISRC artist check and the ISWC composer check.
 ARTIST_SIMILARITY_THRESHOLD = 70
 
 
@@ -197,6 +195,70 @@ def check_isrc_conflict(isrc, artist):
     }
 
 
+# ISWC already registered on MusicBrainz for a different composer.
+# Unlike the ISRC check (one artist), a work can have several writers, so
+# we compare against the whole writers list: if at least one of our
+# writers matches at least one composer MusicBrainz found, we treat it as
+# the same work, not a conflict.
+def check_iswc_conflict(iswc, writers):
+    if not iswc or not iswc.strip():
+        return None
+
+    cleaned_iswc = iswc.replace("-", "").replace(".", "").upper().strip()
+
+    cached_result = models.get_cached_mb_work_result(cleaned_iswc)
+
+    if cached_result is not None:
+        works = cached_result
+    else:
+        try:
+            works = musicbrainz_client.search_works_by_iswc(cleaned_iswc)
+            models.save_mb_work_result(cleaned_iswc, works)
+        except requests.exceptions.RequestException:
+            return {
+                "severity": "info",
+                "message": "Could not check MusicBrainz for ISWC conflicts right now.",
+                "fix": "Check your internet connection and try again later.",
+            }
+
+    if len(works) == 0:
+        return None
+
+    our_writer_names = [w.get("name", "") for w in writers if w.get("name")]
+
+    same_composer_found = False
+    for work in works:
+        for composer_name in work["composers"]:
+            for our_name in our_writer_names:
+                similarity = fuzz.token_sort_ratio(our_name, composer_name)
+                if similarity >= ARTIST_SIMILARITY_THRESHOLD:
+                    same_composer_found = True
+                    break
+            if same_composer_found:
+                break
+        if same_composer_found:
+            break
+
+    if same_composer_found:
+        return None
+
+    other_title = works[0]["title"]
+    # Remove duplicate composer names (MusicBrainz can list the same
+    # person twice, e.g. once as composer and once as lyricist).
+    unique_composers = []
+    for name in works[0]["composers"]:
+        if name not in unique_composers:
+            unique_composers.append(name)
+    other_composers = ", ".join(unique_composers) if unique_composers else "unknown composer"
+
+    return {
+        "severity": "red",
+        "message": f"This ISWC is already registered for a different work "
+                    f"(found: '{other_title}' by {other_composers}).",
+        "fix": "Verify the ISWC is correct, or request a new one for this composition.",
+    }
+
+
 # Run all rules, drop the Nones.
 def run_all_checks(track):
     writers = track.get("writers", [])
@@ -210,6 +272,7 @@ def run_all_checks(track):
         check_name_consistency(track.get("artist", ""), writers),
         check_similar_writer_names(writers),
         check_isrc_conflict(track.get("isrc"), track.get("artist", "")),
+        check_iswc_conflict(track.get("iswc"), writers),
     ]
     return [r for r in results if r is not None]
 
@@ -279,3 +342,12 @@ if __name__ == "__main__":
     else:
         print(f"[{similar['severity'].upper()}] {similar['message']}")
         print(f"    -> {similar['fix']}")
+
+    print("\n--- Direct test of check_iswc_conflict ---")
+    fake_writers = [{"name": "Mario Rossi", "split": 100, "ipi": ""}]
+    iswc_conflict = check_iswc_conflict("T-101.690.320-9", fake_writers)
+    if iswc_conflict is None:
+        print("No conflict detected (unexpected for this test).")
+    else:
+        print(f"[{iswc_conflict['severity'].upper()}] {iswc_conflict['message']}")
+        print(f"    -> {iswc_conflict['fix']}")
