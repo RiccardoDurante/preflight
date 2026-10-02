@@ -56,6 +56,17 @@ def init_db():
         )
     """)
 
+    # Cache of MusicBrainz ISWC lookups. Same idea as mb_cache, but for
+    # works (compositions) instead of recordings. Kept as a separate table
+    # so it's clear which kind of code each cache is for.
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS mb_work_cache (
+            iswc         TEXT PRIMARY KEY,
+            result_json  TEXT NOT NULL,
+            fetched_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -156,6 +167,39 @@ def save_mb_result(isrc, recordings):
     conn.close()
 
 
+# Look up a cached MusicBrainz work result for this ISWC.
+# Returns the list of works if we already searched this ISWC before.
+# Returns None if we have never searched it (cache miss).
+def get_cached_mb_work_result(iswc):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("SELECT result_json FROM mb_work_cache WHERE iswc = ?", (iswc,))
+    row = cur.fetchone()
+
+    conn.close()
+
+    if row is None:
+        return None
+
+    return json.loads(row["result_json"])
+
+
+# Save a MusicBrainz work result for this ISWC, so we don't search it again.
+# If the ISWC is already cached, this overwrites the old result.
+def save_mb_work_result(iswc, works):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT OR REPLACE INTO mb_work_cache (iswc, result_json, fetched_at)
+        VALUES (?, ?, CURRENT_TIMESTAMP)
+    """, (iswc, json.dumps(works)))
+
+    conn.commit()
+    conn.close()
+
+
 # Smoke test: `python models.py`
 if __name__ == "__main__":
     init_db()
@@ -180,11 +224,20 @@ if __name__ == "__main__":
     print(f"Read back: '{reread['title']}' with score {reread['risk_score']} "
           f"and {len(reread['issues'])} issue(s).")
 
-    # Quick check of the new cache functions.
-    print("\nTesting MusicBrainz cache:")
+    # Quick check of the ISRC cache functions.
+    print("\nTesting MusicBrainz ISRC cache:")
     print(f"Cache before saving: {get_cached_mb_result('GBDUW0000053')}")
 
     fake_result = [{"title": "One More Time", "artist": "Daft Punk", "mbid": "60fa767a-d85d-4991-82bc-4294e0b11ae7"}]
     save_mb_result("GBDUW0000053", fake_result)
 
     print(f"Cache after saving: {get_cached_mb_result('GBDUW0000053')}")
+
+    # Quick check of the ISWC work cache functions.
+    print("\nTesting MusicBrainz ISWC work cache:")
+    print(f"Cache before saving: {get_cached_mb_work_result('T1016903209')}")
+
+    fake_work_result = [{"title": "HELLO!", "composers": ["Tsunku"], "mbid": "b1df2cf3-69a9-3bc0-be44-f71e79b27a22"}]
+    save_mb_work_result("T1016903209", fake_work_result)
+
+    print(f"Cache after saving: {get_cached_mb_work_result('T1016903209')}")
