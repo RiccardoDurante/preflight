@@ -255,12 +255,23 @@ dashboard (score distribution, most common issues, total money at risk
 across a whole catalog) is still open -- see ROADMAP.md.
 
 
+## Update -- v2 (Phase 4, continued)
+
+The dashboard is live at `/dashboard`: total tracks analyzed, average risk
+score, the green/amber/red distribution, total estimated revenue at risk
+across the whole catalog, and the five most common fixes needed. That last
+one is grouped by the fix recommendation rather than the issue message --
+DECISION_LOG D19 explains why that is the more meaningful aggregate. This
+closes out Phase 4.
+
+
 # More documentation
 
 For a deeper look at the product thinking behind PreFlight:
 - [Product Brief](docs/PROJECT_BRIEF.md) — problem, market, users, competition
 - [Roadmap](docs/ROADMAP.md) — completed work and planned phases
 - [Decision Log](docs/DECISION_LOG.md) — key decisions with context and reasoning
+
 
 
 

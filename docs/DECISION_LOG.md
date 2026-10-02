@@ -402,6 +402,33 @@ row` loop, so there's no fixed maximum to document or enforce.
 
 ---
 
+## D19 -- Defining "most frequent issue" for the dashboard: by message vs by fix
+
+**Context:** the dashboard needs to show which problem shows up most often
+across a catalog. Each issue has a `message` (which often embeds per-track
+data, like a writer''s name or a specific percentage) and a `fix` (a static
+recommendation that never changes between tracks for the same rule).
+
+**Options considered:**
+- A. Group and count by `message`. Simple, but two tracks with "the same"
+  problem (e.g. two different tracks both missing a publisher) would
+  almost never produce an identical string once any rule embeds dynamic
+  data, making the count meaningless for several rules.
+- B. Group and count by `fix`. Every rule''s fix text is a fixed string per
+  branch (see checks.py), so it is stable across tracks and makes a
+  meaningful aggregate.
+
+**Choice:** B.
+
+**Reason:** the dashboard''s purpose is to tell someone managing a catalog
+"what should I go fix first," and the fix text already answers that
+question directly -- counting by fix means the number on screen is also
+the actionable recommendation, with no translation needed. Grouping by
+`message` would have under-counted real duplicates and over-fragmented
+the list for no benefit.
+
+---
+
 ## Meta-principle
 
 Every entry above follows the same structure: **context -> options -> choice
@@ -411,5 +438,6 @@ recoverable in one place.
 
 For an early-career project manager, the ability to make and document
 decisions is more important than the ability to write clever code.
+
 
 

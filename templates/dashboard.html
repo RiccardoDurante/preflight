@@ -1,0 +1,62 @@
+{# Dashboard page: catalog-wide stats across every analyzed track. #}
+{% extends "layout.html" %}
+
+{% block content %}
+<h1 class="mb-4">Dashboard</h1>
+
+{% if summary.total_tracks == 0 %}
+    <p class="text-muted">No tracks analyzed yet. <a href="{{ url_for('index') }}">Start now</a>.</p>
+{% else %}
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="fs-2 fw-bold">{{ summary.total_tracks }}</div>
+                    <div class="text-muted small">Tracks analyzed</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="fs-2 fw-bold">{{ summary.average_score }}</div>
+                    <div class="text-muted small">Average risk score</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="fs-2 fw-bold">&euro;{{ "%.2f"|format(summary.total_revenue_at_risk) }}</div>
+                    <div class="text-muted small">Total revenue at risk</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <span class="badge score-badge score-green">{{ summary.band_counts.green }} green</span>
+                    <span class="badge score-badge score-amber">{{ summary.band_counts.amber }} amber</span>
+                    <span class="badge score-badge score-red">{{ summary.band_counts.red }} red</span>
+                    <div class="text-muted small mt-1">Score distribution</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Most common fixes needed</h5>
+            {% if summary.top_fixes %}
+                <ol class="mb-0">
+                    {% for item in summary.top_fixes %}
+                        <li>{{ item.fix }} <span class="text-muted">({{ item.count }}x)</span></li>
+                    {% endfor %}
+                </ol>
+            {% else %}
+                <p class="text-muted mb-0">No issues found across the catalog.</p>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

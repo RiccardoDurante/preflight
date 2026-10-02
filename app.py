@@ -9,6 +9,7 @@ from xhtml2pdf import pisa
 from checks import run_all_checks, calculate_risk_score, score_band, estimate_revenue_at_risk
 from models import init_db, save_track, get_track, get_all_tracks
 from batch import parse_batch_row
+from dashboard import build_catalog_summary
 
 app = Flask(__name__)
 
@@ -205,8 +206,21 @@ def batch():
     return render_template("batch_results.html", results=results)
 
 
+# Dashboard: catalog-wide stats across every analyzed track.
+@app.route("/dashboard")
+def dashboard():
+    tracks = get_all_tracks()
+    for t in tracks:
+        t["band"] = score_band(t["risk_score"])
+        t["revenue_risk"] = estimate_revenue_at_risk(t, t["issues"])
+    summary = build_catalog_summary(tracks)
+    return render_template("dashboard.html", summary=summary)
+
+
 if __name__ == "__main__":
     app.run(debug=True)
+
+
 
 
 
