@@ -14,6 +14,8 @@ from checks import (
     check_similar_writer_names,
     check_isrc_conflict,
     check_iswc_conflict,
+    check_expected_streams,
+    estimate_revenue_at_risk,
     run_all_checks,
     calculate_risk_score,
     score_band,
@@ -390,3 +392,77 @@ def test_score_bands():
     assert score_band(100) == "green"
     assert score_band(65) == "amber"
     assert score_band(30) == "red"
+
+
+# --- Rule 10: expected_streams validation ---
+
+def test_valid_expected_streams_passes():
+    assert check_expected_streams("10000") is None
+
+
+def test_zero_expected_streams_passes():
+    assert check_expected_streams("0") is None
+
+
+def test_negative_expected_streams_is_amber():
+    issue = check_expected_streams("-500")
+    assert issue is not None
+    assert issue["severity"] == "amber"
+
+
+def test_non_numeric_expected_streams_is_amber():
+    issue = check_expected_streams("abc")
+    assert issue is not None
+    assert issue["severity"] == "amber"
+
+
+# --- Revenue at risk estimate ---
+
+def test_revenue_at_risk_no_issues_is_zero():
+    track = {"expected_streams": "100000", "territory": "italy"}
+    result = estimate_revenue_at_risk(track, [])
+    assert result["total_revenue"] == 350.0  # 100000 * 0.0035
+    assert result["risk_fraction"] == 0
+    assert result["revenue_at_risk"] == 0
+
+
+def test_revenue_at_risk_scales_with_territory():
+    track_it = {"expected_streams": "100000", "territory": "italy"}
+    track_usa = {"expected_streams": "100000", "territory": "usa"}
+    result_it = estimate_revenue_at_risk(track_it, [])
+    result_usa = estimate_revenue_at_risk(track_usa, [])
+    assert result_usa["total_revenue"] > result_it["total_revenue"]
+
+
+def test_revenue_at_risk_red_and_amber_issues():
+    track = {"expected_streams": "100000", "territory": "italy"}
+    issues = [
+        {"severity": "red", "message": "x", "fix": "y"},
+        {"severity": "amber", "message": "x", "fix": "y"},
+    ]
+    result = estimate_revenue_at_risk(track, issues)
+    # 15% (red) + 5% (amber) = 20% of 350.0 = 70.0
+    assert result["risk_fraction"] == 20.0
+    assert result["revenue_at_risk"] == 70.0
+
+
+def test_revenue_at_risk_is_capped_at_80_percent():
+    track = {"expected_streams": "100000", "territory": "italy"}
+    issues = [{"severity": "red", "message": "x", "fix": "y"}] * 10  # 150% uncapped
+    result = estimate_revenue_at_risk(track, issues)
+    assert result["risk_fraction"] == 80.0
+
+
+def test_revenue_at_risk_handles_invalid_streams_gracefully():
+    track = {"expected_streams": "not-a-number", "territory": "italy"}
+    result = estimate_revenue_at_risk(track, [])
+    assert result["total_revenue"] == 0
+    assert result["revenue_at_risk"] == 0
+
+
+def test_revenue_at_risk_defaults_to_other_territory_rate():
+    track = {"expected_streams": "100000"}  # no territory key at all
+    result = estimate_revenue_at_risk(track, [])
+    assert result["total_revenue"] == 250.0  # 100000 * 0.0025 (other rate)
+
+
