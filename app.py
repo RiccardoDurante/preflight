@@ -150,11 +150,14 @@ def history():
     tracks = get_all_tracks()
     for t in tracks:
         t["band"] = score_band(t["risk_score"])
+        t["revenue_risk"] = estimate_revenue_at_risk(t, t["issues"])
     return render_template("history.html", tracks=tracks)
 
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
 
 
 

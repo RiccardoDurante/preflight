@@ -12,6 +12,7 @@
                 <th>Artist</th>
                 <th>Score</th>
                 <th>Analyzed on</th>
+                <th>Revenue at risk</th>
                 <th></th>
             </tr>
         </thead>
@@ -26,6 +27,7 @@
                         </span>
                     </td>
                     <td class="text-muted small">{{ t.created_at }}</td>
+                    <td>&euro;{{ "%.2f"|format(t.revenue_risk.revenue_at_risk) }}</td>
                     <td>
                         <a href="{{ url_for('report', track_id=t.id) }}" class="btn btn-sm btn-outline-primary">View report</a>
                     </td>
@@ -37,3 +39,4 @@
     <p class="text-muted">No tracks analyzed yet. <a href="{{ url_for('index') }}">Start now</a>.</p>
 {% endif %}
 {% endblock %}
+

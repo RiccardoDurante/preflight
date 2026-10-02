@@ -134,6 +134,16 @@ def get_all_tracks():
     cur = conn.cursor()
     cur.execute("SELECT * FROM tracks ORDER BY created_at DESC")
     tracks = [dict(row) for row in cur.fetchall()]
+
+    # Load issues for all tracks in one extra query, grouped by track_id,
+    # so we can estimate the revenue at risk for each row.
+    cur.execute("SELECT * FROM issues")
+    issues_by_track = {}
+    for row in cur.fetchall():
+        issues_by_track.setdefault(row["track_id"], []).append(dict(row))
+    for t in tracks:
+        t["issues"] = issues_by_track.get(t["id"], [])
+
     conn.close()
     return tracks
 
@@ -245,6 +255,7 @@ if __name__ == "__main__":
     save_mb_work_result("T1016903209", fake_work_result)
 
     print(f"Cache after saving: {get_cached_mb_work_result('T1016903209')}")
+
 
 
 
