@@ -77,9 +77,11 @@ body {
 }
 .issue-red   { border-left: 4px solid #b91c1c; }
 .issue-amber { border-left: 4px solid #b7791f; }
+.issue-info  { border-left: 4px solid #2563a8; }
 
 .severity-red   { background-color: #b91c1c; color: white; }
 .severity-amber { background-color: #b7791f; color: white; }
+.severity-info  { background-color: #2563a8; color: white; }
 
 /* Score badge in the history table. */
 .score-badge {
@@ -90,3 +92,4 @@ body {
 
 /* Footer: quieter. */
 footer { color: #6b7280; }
+
