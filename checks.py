@@ -273,6 +273,7 @@ def run_all_checks(track):
         check_similar_writer_names(writers),
         check_isrc_conflict(track.get("isrc"), track.get("artist", "")),
         check_iswc_conflict(track.get("iswc"), writers),
+        check_expected_streams(track.get("expected_streams", "0")),
     ]
     return [r for r in results if r is not None]
 
@@ -286,6 +287,25 @@ def calculate_risk_score(issues):
         elif issue["severity"] == "amber":
             score -= 8
     return max(score, 0)
+
+
+# Expected streams must be a valid, non-negative number.
+def check_expected_streams(value):
+    try:
+        streams = float(value)
+    except (ValueError, TypeError):
+        return {
+            "severity": "amber",
+            "message": f"Expected streams value '{value}' is not a valid number.",
+            "fix": "Enter a numeric value (e.g. 10000).",
+        }
+    if streams < 0:
+        return {
+            "severity": "amber",
+            "message": f"Expected streams value ({streams}) is negative.",
+            "fix": "Enter a non-negative number of expected streams.",
+        }
+    return None
 
 
 # Royalty rate per stream, in euros (rough industry averages).
@@ -398,4 +418,6 @@ if __name__ == "__main__":
     else:
         print(f"[{iswc_conflict['severity'].upper()}] {iswc_conflict['message']}")
         print(f"    -> {iswc_conflict['fix']}")
+
+
 
