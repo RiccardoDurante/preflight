@@ -372,6 +372,36 @@ becomes available.
 
 ---
 
+## D18 -- CSV format for batch upload: numbered columns vs a single delimited cell
+
+**Context:** Phase 4 needed a CSV format that could represent a variable
+number of writers per track (one track might have one writer, another
+three), using a format a label or distributor could actually produce from
+a spreadsheet.
+
+**Options considered:**
+- A. One "writers" column per row, with a custom delimiter inside the cell
+  (e.g. `Mario Rossi:60:00123456789;Anna Bianchi:40:`).
+- B. Numbered columns -- `writer1_name`, `writer1_split`, `writer1_ipi`,
+  `writer2_name`, and so on -- with each row using as many as it needs.
+- C. One row per writer instead of one row per track, with a shared track
+  ID column to group them back together.
+
+**Choice:** B.
+
+**Reason:** option A is compact but fragile -- it asks the person
+preparing the CSV to hand-write a custom mini-syntax inside a single
+Excel cell, which is exactly the kind of manual, error-prone step this
+whole tool exists to catch. Option C is the most "correct" relationally,
+but it changes what a "row" means in a way that doesn't match how a
+distributor's spreadsheet is usually shaped (one line per track). Option B
+reads naturally in a spreadsheet -- each writer gets its own three columns,
+filled in or left blank -- and `parse_batch_row` (`batch.py`) handles a
+different writer count per row with a simple `while f"writer{i}_name" in
+row` loop, so there's no fixed maximum to document or enforce.
+
+---
+
 ## Meta-principle
 
 Every entry above follows the same structure: **context -> options -> choice
@@ -381,4 +411,5 @@ recoverable in one place.
 
 For an early-career project manager, the ability to make and document
 decisions is more important than the ability to write clever code.
+
 

@@ -1,12 +1,14 @@
 """app.py — Flask routes for the PreFlight app."""
 
-from io import BytesIO
+import csv
+from io import BytesIO, StringIO
 from flask import Flask, render_template, request, redirect, url_for, abort, Response
 
 from xhtml2pdf import pisa
 
 from checks import run_all_checks, calculate_risk_score, score_band, estimate_revenue_at_risk
 from models import init_db, save_track, get_track, get_all_tracks
+from batch import parse_batch_row
 
 app = Flask(__name__)
 
@@ -154,8 +156,61 @@ def history():
     return render_template("history.html", tracks=tracks)
 
 
+# Batch upload: analyze many tracks from a single CSV file at once.
+@app.route("/batch", methods=["GET", "POST"])
+def batch():
+    if request.method == "GET":
+        return render_template("batch.html")
+
+    uploaded_file = request.files.get("csv_file")
+    if uploaded_file is None or uploaded_file.filename == "":
+        return render_template("batch.html", error="Please choose a CSV file.")
+
+    try:
+        text = uploaded_file.stream.read().decode("utf-8-sig")
+    except UnicodeDecodeError:
+        return render_template(
+            "batch.html",
+            error="Could not read the file. Make sure it is a UTF-8 encoded CSV.",
+        )
+
+    reader = csv.DictReader(StringIO(text))
+    results = []
+    row_number = 1  # the header is row 1, so the first data row is row 2
+
+    for row in reader:
+        row_number += 1
+        track, row_error = parse_batch_row(row)
+
+        if row_error:
+            results.append({"row": row_number, "error": row_error})
+            continue
+
+        issues = run_all_checks(track)
+        score = calculate_risk_score(issues)
+        track_id = save_track(track, score, issues)
+        revenue_risk = estimate_revenue_at_risk(track, issues)
+
+        results.append({
+            "row": row_number,
+            "track_id": track_id,
+            "title": track["title"],
+            "artist": track["artist"],
+            "score": score,
+            "band": score_band(score),
+            "issue_count": len(issues),
+            "revenue_risk": revenue_risk,
+        })
+
+    return render_template("batch_results.html", results=results)
+
+
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+
+
 
 
 

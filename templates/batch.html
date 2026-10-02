@@ -1,0 +1,44 @@
+{# Batch upload page: analyze many tracks from one CSV file. #}
+{% extends "layout.html" %}
+
+{% block content %}
+<h1 class="mb-3">Batch upload</h1>
+<p class="text-muted">
+    Upload a CSV file to analyze multiple tracks at once. Each row is validated
+    and saved the same way as a single track submitted through the form.
+</p>
+
+{% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label class="form-label">CSV file</label>
+                <input type="file" name="csv_file" class="form-control" accept=".csv" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Analyze file</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Expected CSV format</h5>
+        <p class="mb-2 text-muted">
+            Required columns: <code>title</code>, <code>artist</code>.
+            Optional: <code>isrc</code>, <code>iswc</code>, <code>publisher</code>,
+            <code>expected_streams</code>, <code>territory</code> (italy / usa / other).
+            Writers use numbered columns: <code>writer1_name</code>,
+            <code>writer1_split</code>, <code>writer1_ipi</code>,
+            <code>writer2_name</code>, and so on -- as many as needed, and rows
+            can have a different number of writers from each other.
+        </p>
+        <a href="{{ url_for('static', filename='sample_batch.csv') }}" class="btn btn-sm btn-outline-secondary">
+            Download sample CSV
+        </a>
+    </div>
+</div>
+{% endblock %}

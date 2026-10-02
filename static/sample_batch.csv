@@ -1,0 +1,4 @@
+title,artist,isrc,iswc,publisher,expected_streams,territory,writer1_name,writer1_split,writer1_ipi,writer2_name,writer2_split,writer2_ipi
+Notte a Roma,Mario Rossi,ITB251234567,T-123456789-0,Rossi Publishing,100000,italy,Mario Rossi,60,00123456789,Anna Bianchi,40,
+Summer Nights,Anna Bianchi,,,,,usa,Anna Bianchi,100,,,,
+Broken Splits,Test Artist,,,,,other,Mario Rossi,70,,Anna Bianchi,50,

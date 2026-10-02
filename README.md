@@ -239,11 +239,28 @@ negative value is now flagged as its own issue, the same way every other
 field is checked.
 
 
+## Update -- v2 (Phase 4, October 2026)
+
+PreFlight can now analyze many tracks at once instead of one at a time.
+The `/batch` page accepts a CSV file -- one row per track, with numbered
+columns for a variable number of writers (see DECISION_LOG D18 for why I
+chose that format over a few alternatives) -- and runs every row through
+the exact same validation engine, scoring, and revenue-at-risk estimate
+used by the single-track form. Each track gets saved and shows up in the
+history page like any other; a row with a missing title or artist is
+skipped with a visible reason instead of breaking the whole upload.
+
+This is the first step of Phase 4 in the roadmap. The catalog-level
+dashboard (score distribution, most common issues, total money at risk
+across a whole catalog) is still open -- see ROADMAP.md.
+
+
 # More documentation
 
 For a deeper look at the product thinking behind PreFlight:
 - [Product Brief](docs/PROJECT_BRIEF.md) — problem, market, users, competition
 - [Roadmap](docs/ROADMAP.md) — completed work and planned phases
 - [Decision Log](docs/DECISION_LOG.md) — key decisions with context and reasoning
+
 
 

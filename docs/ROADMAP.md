@@ -105,6 +105,17 @@ is how a distributor or a label would actually use the tool.
 **Success metric:** processing 1,000 tracks in under 60 seconds on a
 standard laptop.
 
+**Status:** CSV upload and batch analysis shipped on branch `v2` (see
+DECISION_LOG D18 for the CSV format decision). Each row is validated,
+analyzed with the same engine as the single-track form, and saved to the
+database; the results page lists every track with its score, issue count,
+and revenue at risk, linking to each full report. Rows with a missing
+title or artist are skipped with a visible reason instead of failing the
+whole upload. The catalog-level dashboard (score distribution, most
+frequent issues, total money at risk) is not built yet -- it is the
+natural next step, since the history page already has all the per-track
+data it would need to aggregate.
+
 ---
 
 ## Phase 5 — API and multi-tenant (v2.0)
@@ -151,4 +162,5 @@ pilot.
 4. **Prefer transparent formulas over black-box models.** For a tool that
    claims to fight opacity, opacity in the tool itself would be a
    contradiction.
+
 
