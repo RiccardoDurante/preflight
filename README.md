@@ -265,12 +265,33 @@ DECISION_LOG D19 explains why that is the more meaningful aggregate. This
 closes out Phase 4.
 
 
+# Deployment
+
+PreFlight is deployed on Render''s free tier, configured via `render.yaml`
+in the repository root (build command, start command, and Python version
+are all declared there, so the deploy is reproducible rather than
+clicked together by hand in a dashboard). The production server is
+`gunicorn`, not Flask''s own development server -- the dev server used
+throughout the rest of this README is for local development only and
+is not meant to serve real traffic.
+
+**Known limitation:** Render''s free tier uses an ephemeral filesystem.
+The SQLite database (`database.db`) is recreated empty every time the
+service redeploys or wakes up from sleep after inactivity. This is fine
+for a demo -- the point is to show the validation engine working, not to
+persist a real catalog -- but it means data entered on the live demo is
+not permanent. A production deployment with real data would need either
+Render''s paid persistent disk or a migration to a hosted database
+(PostgreSQL), which is already the plan for Phase 5 (see ROADMAP.md).
+
+
 # More documentation
 
 For a deeper look at the product thinking behind PreFlight:
 - [Product Brief](docs/PROJECT_BRIEF.md) — problem, market, users, competition
 - [Roadmap](docs/ROADMAP.md) — completed work and planned phases
 - [Decision Log](docs/DECISION_LOG.md) — key decisions with context and reasoning
+
 
 
 

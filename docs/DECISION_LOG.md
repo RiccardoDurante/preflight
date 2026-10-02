@@ -429,6 +429,41 @@ the list for no benefit.
 
 ---
 
+## D20 -- Hosting choice and accepting ephemeral storage for the demo
+
+**Context:** the project needed a live deployment to be useful as a
+portfolio piece -- a repository alone asks a reviewer to clone and run it
+locally, which most people won''t do. This also surfaced a real problem:
+`requirements.txt` had been generated with `pip freeze` and captured the
+entire local virtualenv, including CS50 tooling (`lib50`, `submit50`,
+`style50`) and a Windows-only package (`python-magic-bin`) that would have
+failed to install on Render''s Linux build.
+
+**Options considered:**
+- A. Render free tier, accepting its ephemeral filesystem (SQLite data is
+  wiped on redeploy or after the service sleeps from inactivity).
+- B. A host with persistent storage from the start (a paid Render disk,
+  Railway with a volume, or migrating to a hosted Postgres database).
+
+**Choice:** A, with the limitation documented plainly in the README rather
+than hidden or worked around.
+
+**Reason:** the live deployment''s job is to let someone try the validation
+engine, the batch upload, and the dashboard -- not to act as a real,
+persistent catalog for anyone''s actual music. Paying for persistence, or
+migrating to Postgres, would be solving a problem the demo doesn''t have
+yet. This is the same reasoning already applied in D3 (SQLite over
+Postgres) and D7 (simple score over unfounded precision): don''t add
+complexity for a need that hasn''t materialized. If the project later gets
+a real user who needs their data to persist, that is exactly the trigger
+for Phase 5''s move to Postgres -- not a reason to pre-build it now.
+Separately, trimming `requirements.txt` down to the project''s actual
+direct dependencies (Flask, requests, RapidFuzz, xhtml2pdf, pytest, plus
+`gunicorn` for production) was not just a cleanup: it was necessary for
+the Linux build to succeed at all.
+
+---
+
 ## Meta-principle
 
 Every entry above follows the same structure: **context -> options -> choice
@@ -438,6 +473,7 @@ recoverable in one place.
 
 For an early-career project manager, the ability to make and document
 decisions is more important than the ability to write clever code.
+
 
 
 
