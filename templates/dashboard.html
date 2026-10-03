@@ -5,7 +5,10 @@
 <h1 class="mb-4">Dashboard</h1>
 
 {% if summary.total_tracks == 0 %}
-    <p class="text-muted">No tracks analyzed yet. <a href="{{ url_for('index') }}">Start now</a>.</p>
+    <p class="text-muted">
+    No tracks analyzed yet. <a href="{{ url_for('index') }}">Start now</a>
+    or <a href="{{ url_for('batch_try_sample') }}">try the sample catalog</a>.
+</p>
 {% else %}
     <div class="row g-3 mb-4">
         <div class="col-md-3">
@@ -60,3 +63,4 @@
     </div>
 {% endif %}
 {% endblock %}
+

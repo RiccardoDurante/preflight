@@ -36,7 +36,11 @@
         </tbody>
     </table>
 {% else %}
-    <p class="text-muted">No tracks analyzed yet. <a href="{{ url_for('index') }}">Start now</a>.</p>
+    <p class="text-muted">
+    No tracks analyzed yet. <a href="{{ url_for('index') }}">Start now</a>
+    or <a href="{{ url_for('batch_try_sample') }}">try the sample catalog</a>.
+</p>
 {% endif %}
 {% endblock %}
+
 

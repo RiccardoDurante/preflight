@@ -1,6 +1,7 @@
 """app.py — Flask routes for the PreFlight app."""
 
 import csv
+import os
 from io import BytesIO, StringIO
 from flask import Flask, render_template, request, redirect, url_for, abort, Response
 
@@ -206,6 +207,46 @@ def batch():
     return render_template("batch_results.html", results=results)
 
 
+# One-click demo: runs the bundled sample CSV through the same pipeline
+# as a real upload, so a first-time visitor with no data of their own
+# can still see batch upload and the dashboard working with real results.
+@app.route("/batch/try-sample")
+def batch_try_sample():
+    sample_path = os.path.join(app.root_path, "static", "sample_batch.csv")
+    with open(sample_path, "r", encoding="utf-8-sig") as f:
+        text = f.read()
+
+    reader = csv.DictReader(StringIO(text))
+    results = []
+    row_number = 1
+
+    for row in reader:
+        row_number += 1
+        track, row_error = parse_batch_row(row)
+
+        if row_error:
+            results.append({"row": row_number, "error": row_error})
+            continue
+
+        issues = run_all_checks(track)
+        score = calculate_risk_score(issues)
+        track_id = save_track(track, score, issues)
+        revenue_risk = estimate_revenue_at_risk(track, issues)
+
+        results.append({
+            "row": row_number,
+            "track_id": track_id,
+            "title": track["title"],
+            "artist": track["artist"],
+            "score": score,
+            "band": score_band(score),
+            "issue_count": len(issues),
+            "revenue_risk": revenue_risk,
+        })
+
+    return render_template("batch_results.html", results=results)
+
+
 # Dashboard: catalog-wide stats across every analyzed track.
 @app.route("/dashboard")
 def dashboard():
@@ -219,6 +260,8 @@ def dashboard():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
 
 
 

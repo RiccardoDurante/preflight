@@ -10,6 +10,11 @@
     </p>
 </div>
 
+<p class="text-muted">
+    No track to test right now? <a href="{{ url_for('batch_try_sample') }}">Try the sample catalog</a>
+    or <a href="{{ url_for('batch') }}">upload your own CSV</a> to see PreFlight analyze several tracks at once.
+</p>
+
 <hr class="my-4">
 
 <form action="{{ url_for('analyze') }}" method="post">
@@ -53,7 +58,6 @@
         </div>
     </div>
 
-    <hr class="my-4">
 
     <h4>Writers</h4>
     <p class="text-muted small">Splits must total 100%.</p>
@@ -77,7 +81,6 @@
 
     <button type="button" id="add-writer" class="btn btn-outline-secondary btn-sm mt-2">+ Add writer</button>
 
-    <hr class="my-4">
 
     <button type="submit" class="btn btn-primary btn-lg">Analyze</button>
 </form>
@@ -100,3 +103,5 @@
     });
 </script>
 {% endblock %}
+
+

@@ -266,7 +266,10 @@ score, the green/amber/red distribution, total estimated revenue at risk
 across the whole catalog, and the five most common fixes needed. That last
 one is grouped by the fix recommendation rather than the issue message --
 DECISION_LOG D19 explains why that is the more meaningful aggregate. This
-closes out Phase 4.
+closes out Phase 4. A one-click "Try with sample data" link (on the home
+page, the batch upload page, and the empty dashboard/history states) runs
+the bundled sample CSV through the same pipeline, so a first-time visitor
+with no data of their own can still see real results immediately.
 
 
 # Deployment
@@ -295,6 +298,8 @@ For a deeper look at the product thinking behind PreFlight:
 - [Product Brief](docs/PROJECT_BRIEF.md) — problem, market, users, competition
 - [Roadmap](docs/ROADMAP.md) — completed work and planned phases
 - [Decision Log](docs/DECISION_LOG.md) — key decisions with context and reasoning
+
+
 
 
 

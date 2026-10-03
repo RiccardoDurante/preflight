@@ -12,6 +12,19 @@
     <div class="alert alert-danger">{{ error }}</div>
 {% endif %}
 
+<div class="card mb-4 bg-light">
+    <div class="card-body">
+        <h5 class="card-title">No data handy?</h5>
+        <p class="text-muted mb-2">
+            Try the bundled sample catalog -- it runs through the same
+            validation engine and saves real results you can explore.
+        </p>
+        <a href="{{ url_for('batch_try_sample') }}" class="btn btn-outline-primary">
+            Try with sample data
+        </a>
+    </div>
+</div>
+
 <div class="card mb-4">
     <div class="card-body">
         <form method="POST" enctype="multipart/form-data">
@@ -42,3 +55,4 @@
     </div>
 </div>
 {% endblock %}
+
